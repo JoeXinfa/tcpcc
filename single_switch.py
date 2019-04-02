@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 https://github.com/mininet/mininet/wiki/Introduction-to-Mininet
+
+Mininet must run as root
+$ sudo python thisfile.py
 """
                                                                                              
 from mininet.topo import Topo
