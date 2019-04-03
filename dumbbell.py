@@ -11,26 +11,24 @@ from mininet.log import setLogLevel
 
 
 class DumbbellTopo(Topo):
-    def build(self, n=2, delay='21ms'):
+    def build(self, n=2, delay='21ms', bw=21):
         backboneRouter1 = self.addSwitch('sb1')
         accessRouter1 = self.addSwitch('sa1')
-        self.addLink(backboneRouter1, accessRouter1, bw=10, delay=delay)
+        self.addLink(backboneRouter1, accessRouter1, bw=bw)
         for h in range(n):
     	    # Each host gets 50%/n of system CPU
-    	    host = self.addHost('hs%s' % (h + 1), cpu=.5/n)
-    	    # 10 Mbps, 5ms delay, 2% loss, 1000 packet queue
-    	    self.addLink(host, accessRouter1, bw=10, delay=delay)
+            host = self.addHost('hs%s' % (h + 1), cpu=.5/n)
+            self.addLink(host, accessRouter1, bw=80)
 
         backboneRouter2 = self.addSwitch('sb2')
         accessRouter2 = self.addSwitch('sa2')
-        self.addLink(backboneRouter2, accessRouter2, bw=10, delay=delay)
+        self.addLink(backboneRouter2, accessRouter2, bw=bw)
         for h in range(n):
     	    # Each host gets 50%/n of system CPU
-    	    host = self.addHost('hr%s' % (h + 1), cpu=.5/n)
-    	    # 10 Mbps, 5ms delay, 2% loss, 1000 packet queue
-    	    self.addLink(host, accessRouter2, bw=10, delay=delay)
+            host = self.addHost('hr%s' % (h + 1), cpu=.5/n)
+            self.addLink(host, accessRouter2, bw=80)
             
-        self.addLink(backboneRouter1, backboneRouter2, bw=80, delay=delay)
+        self.addLink(backboneRouter1, backboneRouter2, bw=82, delay=delay)
 
 
 def perfTest():
