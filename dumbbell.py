@@ -6,7 +6,7 @@ from mininet.topo import Topo
 from mininet.net import Mininet
 from mininet.node import CPULimitedHost
 from mininet.link import TCLink
-from mininet.util import dumpNodeConnections
+from mininet.util import dumpNodeConnections, quietRun
 from mininet.log import setLogLevel
 
 
@@ -34,6 +34,11 @@ class DumbbellTopo(Topo):
 def perfTest():
     "Create network and run simple performance test"
     topo = DumbbellTopo()
+    
+    # Select TCP Reno
+    output = quietRun('sysctl -w net.ipv4.tcp_congestion_control=reno')
+    assert 'reno' in output
+    
     net = Mininet(topo=topo, host=CPULimitedHost, link=TCLink)
     net.start()
     
