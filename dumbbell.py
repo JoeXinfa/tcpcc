@@ -36,8 +36,9 @@ class DumbbellTopo(Topo):
 
 def start_tcpprobe(fn="cwnd.txt"):
 #    os.system("rmmod tcp_probe; modprobe tcp_probe full=1;")
-    os.system("modprobe tcp_probe full=1;")
-    ffn = os.path.join("/tmp", fn)
+    os.system("modprobe tcp_probe port=5001")
+    ffn = os.path.join("/home/mininet/data", fn)
+    print("TCP probe save to {}".format(ffn))
     Popen("cat /proc/net/tcpprobe > {}".format(ffn), shell=True)
 
 
@@ -47,9 +48,9 @@ def perfTest():
     topo = DumbbellTopo(delay=delay)
     
     # Select TCP Reno
-#    alg = 'reno'
-#    output = quietRun('sysctl -w net.ipv4.tcp_congestion_control={}'.format(alg))
-#    assert alg in output
+    alg = 'reno'
+    output = quietRun('sysctl -w net.ipv4.tcp_congestion_control={}'.format(alg))
+    assert alg in output
 
     net = Mininet(topo=topo, host=CPULimitedHost, link=TCLink)
     net.start()
@@ -62,19 +63,23 @@ def perfTest():
     
     print("Testing bandwidth between hosts")
 
-    fn = 'cwnd_reno' + '_' + delay + '.txt'
+    fn = 'cwnd_' + alg + '_' + delay + '.txt'
     start_tcpprobe(fn=fn)
 
     hs1, hr1 = net.get('hs1', 'hr1')
     hs2, hr2 = net.get('hs2', 'hr2')
 #    net.iperf((hs1, hr1), seconds=20)
 #    net.iperf((hs2, hr2), seconds=20)
+    
+#    result = hs1.cmd('ifconfig')
+#    print("hs1 ifconfig", result)
 
-    hr1.cmd('iperf -s -p 5001&')
-    hr2.cmd('iperf -s -p 5001&')
-    hs1.cmd('iperf -c hr1 -p 5001 -i 1 -w 16m -Z reno -t 35>results1&')
-    time.sleep(5)
-    hs2.cmd('iperf -c hr2 -p 5001 -i 1 -w 16m -Z reno -t 30>results2&')
+    hr1.cmd('iperf -s -p 5001 &')
+#    hr2.cmd('iperf -s -p 5001 &')
+    #hs1.cmd('iperf -c {} -p 5001 -i 1 -w 16m -Z reno -t 35 > results1 &'.format(hr1.IP()))
+    hs1.cmd('iperf -c hr1 -p 5001 -i 1 -w 16m -Z reno -t 35 > results1 &')
+#    time.sleep(5)
+#    hs2.cmd('iperf -c hr2 -p 5001 -i 1 -w 16m -Z reno -t 35 > results2 &')
 
     net.stop()
 
