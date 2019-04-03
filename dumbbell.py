@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 """
-                                                                                             
+
+import os
+from subprocess import Popen
 from mininet.topo import Topo
 from mininet.net import Mininet
 from mininet.node import CPULimitedHost
@@ -31,6 +33,13 @@ class DumbbellTopo(Topo):
         self.addLink(backboneRouter1, backboneRouter2, bw=82, delay=delay)
 
 
+def start_tcpprobe(outfile="cwnd.txt"):
+#    os.system("rmmod tcp_probe; modprobe tcp_probe full=1;")
+    os.system("modprobe tcp_probe full=1;")
+    fn = os.path.join("/home/mininet/data/", outfile)
+    Popen("cat /proc/net/tcpprobe > {}".format(fn), shell=True)
+
+
 def perfTest():
     "Create network and run simple performance test"
     topo = DumbbellTopo()
@@ -39,6 +48,8 @@ def perfTest():
     output = quietRun('sysctl -w net.ipv4.tcp_congestion_control=reno')
     assert 'reno' in output
     
+    start_tcpprobe()
+
     net = Mininet(topo=topo, host=CPULimitedHost, link=TCLink)
     net.start()
     
