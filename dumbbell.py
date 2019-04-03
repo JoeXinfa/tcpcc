@@ -15,9 +15,17 @@ from mininet.log import setLogLevel
 
 class DumbbellTopo(Topo):
     def build(self, n=2, delay='21ms', bw=21):
+        """ delay is one-way progagation delay """
+        # Access router speed = bw = 21 packets/ms
+        delay1w = int(delay[:-2]) # one-way propagation delay
+        delay2w = delay1w * 2 # RRT, round-trip-time
+        bdp = bw * delay2w # BDP, bandwidth-delay-product
+        buff = bdp * 0.2 # 20% BDP
+
         backboneRouter1 = self.addSwitch('sb1')
         accessRouter1 = self.addSwitch('sa1')
-        self.addLink(backboneRouter1, accessRouter1, bw=bw)
+        self.addLink(backboneRouter1, accessRouter1, bw=bw,
+                     max_queue_size=buff)
         for h in range(n):
     	    # Each host gets 50%/n of system CPU
             host = self.addHost('hs%s' % (h + 1), cpu=.5/n)
@@ -31,7 +39,10 @@ class DumbbellTopo(Topo):
             host = self.addHost('hr%s' % (h + 1), cpu=.5/n)
             self.addLink(host, accessRouter2, bw=80)
             
-        self.addLink(backboneRouter1, backboneRouter2, bw=82, delay=delay)
+        speed = 82 # packets/ms, same as bandwidth
+        buff = speed * delay2w # BDP, bandwidth-delay-product
+        self.addLink(backboneRouter1, backboneRouter2, bw=speed,
+                     delay=delay, max_queue_size=buff)
 
 
 def start_tcpprobe(fn="cwnd.txt"):
@@ -44,7 +55,8 @@ def start_tcpprobe(fn="cwnd.txt"):
 
 def perfTest():
     "Create network and run simple performance test"
-    delay = '21ms'
+    short, medium, long = '21ms', '81ms', '162ms'
+    delay = short
     topo = DumbbellTopo(delay=delay)
     
     # Select TCP Reno
