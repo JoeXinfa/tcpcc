@@ -3,6 +3,7 @@
 """
 
 import os
+import time
 from subprocess import Popen
 from mininet.topo import Topo
 from mininet.net import Mininet
@@ -46,9 +47,9 @@ def perfTest():
     topo = DumbbellTopo(delay=delay)
     
     # Select TCP Reno
-    alg = 'reno'
-    output = quietRun('sysctl -w net.ipv4.tcp_congestion_control={}'.format(alg))
-    assert alg in output
+#    alg = 'reno'
+#    output = quietRun('sysctl -w net.ipv4.tcp_congestion_control={}'.format(alg))
+#    assert alg in output
 
     net = Mininet(topo=topo, host=CPULimitedHost, link=TCLink)
     net.start()
@@ -59,14 +60,22 @@ def perfTest():
     print("Testing network connectivity")
     net.pingAll()
     
-    print("Testing bandwidth between hs1 and hr1")
+    print("Testing bandwidth between hosts")
 
-    fn = 'cwnd_' + alg + '_' + delay + '.txt'
+    fn = 'cwnd_reno' + '_' + delay + '.txt'
     start_tcpprobe(fn=fn)
 
     hs1, hr1 = net.get('hs1', 'hr1')
-    net.iperf( (hs1, hr1) )
-    
+    hs2, hr2 = net.get('hs2', 'hr2')
+#    net.iperf((hs1, hr1), seconds=20)
+#    net.iperf((hs2, hr2), seconds=20)
+
+    hr1.cmd('iperf -s -p 5001&')
+    hr2.cmd('iperf -s -p 5001&')
+    hs1.cmd('iperf -c hr1 -p 5001 -i 1 -w 16m -Z reno -t 35>results1&')
+    time.sleep(5)
+    hs2.cmd('iperf -c hr2 -p 5001 -i 1 -w 16m -Z reno -t 30>results2&')
+
     net.stop()
 
 
