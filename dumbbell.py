@@ -33,22 +33,22 @@ class DumbbellTopo(Topo):
         self.addLink(backboneRouter1, backboneRouter2, bw=82, delay=delay)
 
 
-def start_tcpprobe(outfile="cwnd.txt"):
+def start_tcpprobe(fn="cwnd.txt"):
 #    os.system("rmmod tcp_probe; modprobe tcp_probe full=1;")
     os.system("modprobe tcp_probe full=1;")
-    fn = os.path.join("/home/mininet/data/", outfile)
-    Popen("cat /proc/net/tcpprobe > {}".format(fn), shell=True)
+    ffn = os.path.join("/tmp", fn)
+    Popen("cat /proc/net/tcpprobe > {}".format(ffn), shell=True)
 
 
 def perfTest():
     "Create network and run simple performance test"
-    topo = DumbbellTopo()
+    delay = '21ms'
+    topo = DumbbellTopo(delay=delay)
     
     # Select TCP Reno
-    output = quietRun('sysctl -w net.ipv4.tcp_congestion_control=reno')
-    assert 'reno' in output
-    
-    start_tcpprobe()
+    alg = 'reno'
+    output = quietRun('sysctl -w net.ipv4.tcp_congestion_control={}'.format(alg))
+    assert alg in output
 
     net = Mininet(topo=topo, host=CPULimitedHost, link=TCLink)
     net.start()
@@ -60,6 +60,10 @@ def perfTest():
     net.pingAll()
     
     print("Testing bandwidth between hs1 and hr1")
+
+    fn = 'cwnd_' + alg + '_' + delay + '.txt'
+    start_tcpprobe(fn=fn)
+
     hs1, hr1 = net.get('hs1', 'hr1')
     net.iperf( (hs1, hr1) )
     
