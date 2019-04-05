@@ -18,8 +18,8 @@ class DumbbellTopo(Topo):
         """ delay is one-way progagation delay """
         # Access router speed = bw = 21 packets/ms
         delay1w = int(delay[:-2]) # one-way propagation delay
-        delay2w = delay1w * 2 # RRT, round-trip-time
-        bdp = bw * delay2w # BDP, bandwidth-delay-product
+        #delay2w = delay1w * 2 # RRT, round-trip-time
+        bdp = bw * delay1w # BDP, bandwidth-delay-product
         buff = bdp * 0.2 # 20% BDP
 
         backboneRouter1 = self.addSwitch('sb1')
@@ -40,14 +40,13 @@ class DumbbellTopo(Topo):
             self.addLink(host, accessRouter2, bw=80)
             
         speed = 82 # packets/ms, same as bandwidth
-        buff = speed * delay2w # BDP, bandwidth-delay-product
+        buff = speed * delay1w # BDP, bandwidth-delay-product
         self.addLink(backboneRouter1, backboneRouter2, bw=speed,
                      delay=delay, max_queue_size=buff)
 
 
 def start_tcpprobe(fn="cwnd.txt"):
-#    os.system("rmmod tcp_probe; modprobe tcp_probe full=1;")
-    os.system("modprobe tcp_probe port=5001")
+    os.system("rmmod tcp_probe; modprobe tcp_probe full=1;")
     ffn = os.path.join("/home/mininet/data", fn)
     print("TCP probe save to {}".format(ffn))
     Popen("cat /proc/net/tcpprobe > {}".format(ffn), shell=True)
@@ -85,14 +84,18 @@ def perfTest():
     
 #    result = hs1.cmd('ifconfig')
 #    print("hs1 ifconfig", result)
+    
+    hr1_IP = hr1.IP()
+    hr2_IP = hr2.IP()
 
     hr1.cmd('iperf -s -p 5001 &')
-#    hr2.cmd('iperf -s -p 5001 &')
-    #hs1.cmd('iperf -c {} -p 5001 -i 1 -w 16m -Z reno -t 35 > results1 &'.format(hr1.IP()))
-    hs1.cmd('iperf -c hr1 -p 5001 -i 1 -w 16m -Z reno -t 35 > results1 &')
-#    time.sleep(5)
-#    hs2.cmd('iperf -c hr2 -p 5001 -i 1 -w 16m -Z reno -t 35 > results2 &')
+    hr2.cmd('iperf -s -p 5002 &')
+    hs1.cmd('iperf -c {} -p 5001 -i 1 -w 16m -Z reno -t 1000 > results1 &'.format(hr1_IP))
+    time.sleep(250)
+    hs2.cmd('iperf -c {} -p 5002 -i 1 -w 16m -Z reno -t 750 > results2 &'.format(hr2_IP))
+    time.sleep(750)
 
+    print("Stopping test")
     net.stop()
 
 
