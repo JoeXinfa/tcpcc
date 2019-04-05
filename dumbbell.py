@@ -88,14 +88,19 @@ def perfTest(delay, alg, run_time=1000, hold_time=250):
     hr1_IP = hr1.IP()
     hr2_IP = hr2.IP()
 
+    iperf_outfn1 = 'iperf1_' + alg + '_' + delay + '.txt'
+    iperf_outfn2 = 'iperf2_' + alg + '_' + delay + '.txt'
     hr1.cmd('iperf -s -p 5001 &')
     hr2.cmd('iperf -s -p 5002 &')
-    hs1.cmd('iperf -c {} -p 5001 -i 1 -w 16m -Z {} -t {} > results1 &'.format(
-            hr1_IP, alg, run_time))
+    print("start connection 1")
+    hs1.cmd('iperf -c {} -p 5001 -i 1 -w 16m -Z {} -t {} > {} &'.format(
+            hr1_IP, alg, run_time, iperf_outfn1))
+    print("sleep for {} seconds".format(hold_time))
     time.sleep(hold_time)
+    print("start connection 2")
     remain_time = run_time - hold_time
-    hs2.cmd('iperf -c {} -p 5002 -i 1 -w 16m -Z {} -t {} > results2 &'.format(
-            hr2_IP, alg, remain_time))
+    hs2.cmd('iperf -c {} -p 5002 -i 1 -w 16m -Z {} -t {} > {} &'.format(
+            hr2_IP, alg, remain_time, iperf_outfn2))
     time.sleep(remain_time) # keep net alive
 
     print("Stopping test")
