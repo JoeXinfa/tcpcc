@@ -59,8 +59,8 @@ def perfTest(delay, alg, run_time=1000, hold_time=250):
     
     # Select TCP Reno
 #    alg = 'reno'
-    output = quietRun('sysctl -w net.ipv4.tcp_congestion_control={}'.format(alg))
-    assert alg in output
+#    output = quietRun('sysctl -w net.ipv4.tcp_congestion_control={}'.format(alg))
+#    assert alg in output
 
     net = Mininet(topo=topo, host=CPULimitedHost, link=TCLink)
     net.start()
