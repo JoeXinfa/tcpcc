@@ -52,14 +52,13 @@ def start_tcpprobe(fn="cwnd.txt"):
     Popen("cat /proc/net/tcpprobe > {}".format(ffn), shell=True)
 
 
-def perfTest():
-    "Create network and run simple performance test"
-    short, medium, long = '21ms', '81ms', '162ms'
-    delay = short
+def perfTest(delay, alg, run_time=1000, hold_time=250):
+#    short, medium, long = '21ms', '81ms', '162ms'
+#    delay = short
     topo = DumbbellTopo(delay=delay)
     
     # Select TCP Reno
-    alg = 'reno'
+#    alg = 'reno'
     output = quietRun('sysctl -w net.ipv4.tcp_congestion_control={}'.format(alg))
     assert alg in output
 
@@ -90,10 +89,13 @@ def perfTest():
 
     hr1.cmd('iperf -s -p 5001 &')
     hr2.cmd('iperf -s -p 5002 &')
-    hs1.cmd('iperf -c {} -p 5001 -i 1 -w 16m -Z reno -t 1000 > results1 &'.format(hr1_IP))
-    time.sleep(250)
-    hs2.cmd('iperf -c {} -p 5002 -i 1 -w 16m -Z reno -t 750 > results2 &'.format(hr2_IP))
-    time.sleep(750)
+    hs1.cmd('iperf -c {} -p 5001 -i 1 -w 16m -Z {} -t {} > results1 &'.format(
+            hr1_IP, alg, run_time))
+    time.sleep(hold_time)
+    remain_time = run_time - hold_time
+    hs2.cmd('iperf -c {} -p 5002 -i 1 -w 16m -Z {} -t {} > results2 &'.format(
+            hr2_IP, alg, remain_time))
+    time.sleep(remain_time) # keep net alive
 
     print("Stopping test")
     net.stop()
@@ -101,4 +103,8 @@ def perfTest():
 
 if __name__ == '__main__':
     setLogLevel( 'info' )
-    perfTest()
+    algorithms = ['reno', 'cubic', 'htcp', 'westwood']
+    delays = ['21ms', '81ms', '162ms']
+    for alg in algorithms:
+        for delay in delays:
+            perfTest(delay, alg)
