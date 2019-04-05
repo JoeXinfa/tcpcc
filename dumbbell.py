@@ -33,7 +33,8 @@ class DumbbellTopo(Topo):
 
         backboneRouter2 = self.addSwitch('sb2')
         accessRouter2 = self.addSwitch('sa2')
-        self.addLink(backboneRouter2, accessRouter2, bw=bw)
+        self.addLink(backboneRouter2, accessRouter2, bw=bw,
+                     max_queue_size=buff)
         for h in range(n):
     	    # Each host gets 50%/n of system CPU
             host = self.addHost('hr%s' % (h + 1), cpu=.5/n)
