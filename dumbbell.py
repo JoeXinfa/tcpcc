@@ -60,8 +60,8 @@ def perfTest(delay, alg, run_time=1000, hold_time=250):
     
     # Select TCP Reno
 #    alg = 'reno'
-#    output = quietRun('sysctl -w net.ipv4.tcp_congestion_control={}'.format(alg))
-#    assert alg in output
+    output = quietRun('sysctl -w net.ipv4.tcp_congestion_control={}'.format(alg))
+    assert alg in output
 
     net = Mininet(topo=topo, host=CPULimitedHost, link=TCLink)
     net.start()
@@ -74,8 +74,8 @@ def perfTest(delay, alg, run_time=1000, hold_time=250):
     
     print("Testing bandwidth between hosts")
 
-    fn = 'cwnd_' + alg + '_' + delay + '.txt'
-    start_tcpprobe(fn=fn)
+#    fn = 'cwnd_' + alg + '_' + delay + '.txt'
+#    start_tcpprobe(fn=fn)
 
     hs1, hr1 = net.get('hs1', 'hr1')
     hs2, hr2 = net.get('hs2', 'hr2')
@@ -90,17 +90,30 @@ def perfTest(delay, alg, run_time=1000, hold_time=250):
 
     iperf_outfn1 = 'iperf1_' + alg + '_' + delay + '.txt'
     iperf_outfn2 = 'iperf2_' + alg + '_' + delay + '.txt'
-    hr1.cmd('iperf -s -p 5001 &')
-    hr2.cmd('iperf -s -p 5002 &')
+#    hr1.cmd('iperf -s -p 5001 &')
+#    hr2.cmd('iperf -s -p 5002 &')
+#    print("start connection 1")
+#    hs1.cmd('iperf -c {} -p 5001 -i 1 -w 16m -Z {} -t {} > {} &'.format(
+#            hr1_IP, alg, run_time, iperf_outfn1))
+#    print("sleep for {} seconds".format(hold_time))
+#    time.sleep(hold_time)
+#    print("start connection 2")
+#    remain_time = run_time - hold_time
+#    hs2.cmd('iperf -c {} -p 5002 -i 1 -w 16m -Z {} -t {} > {} &'.format(
+#            hr2_IP, alg, remain_time, iperf_outfn2))
+#    time.sleep(remain_time) # keep net alive
+
+    hr1.cmd('nohup iperf3 -s -p 5001 &')
+    hr2.cmd('nohup iperf3 -s -p 5002 &')
     print("start connection 1")
-    hs1.cmd('iperf -c {} -p 5001 -i 1 -w 16m -Z {} -t {} > {} &'.format(
-            hr1_IP, alg, run_time, iperf_outfn1))
+    hs1.cmd('nohup iperf3 -c {} -p 5001 -i 1 -t {} > {} &'.format(
+            hr1_IP, run_time, iperf_outfn1))
     print("sleep for {} seconds".format(hold_time))
     time.sleep(hold_time)
     print("start connection 2")
     remain_time = run_time - hold_time
-    hs2.cmd('iperf -c {} -p 5002 -i 1 -w 16m -Z {} -t {} > {} &'.format(
-            hr2_IP, alg, remain_time, iperf_outfn2))
+    hs2.cmd('nohup iperf3 -c {} -p 5002 -i 1 -t {} > {} '.format(
+            hr2_IP, remain_time, iperf_outfn2))
     time.sleep(remain_time) # keep net alive
 
     print("Stopping test")
@@ -109,8 +122,10 @@ def perfTest(delay, alg, run_time=1000, hold_time=250):
 
 if __name__ == '__main__':
     setLogLevel( 'info' )
-    algorithms = ['reno', 'cubic', 'htcp', 'westwood']
-    delays = ['21ms', '81ms', '162ms']
+#    algorithms = ['reno', 'cubic', 'htcp', 'westwood']
+#    delays = ['21ms', '81ms', '162ms']
+    algorithms = ['reno']
+    delays = ['21ms']
     for alg in algorithms:
         for delay in delays:
-            perfTest(delay, alg)
+            perfTest(delay, alg, run_time=10, hold_time=2)
